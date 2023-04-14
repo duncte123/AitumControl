@@ -18,6 +18,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
 
+// TODO: Implement settings to hide hide rules
 class MainActivity : AppCompatActivity() {
     private val allRules = mutableListOf<Rule>()
     private var workerIP = ""
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.rule_list)
 
-        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        recyclerView.layoutManager = GridLayoutManager(this, 2) // TODO: based on screen width
 
         recyclerView.adapter = RuleButtonAdapter(allRules) {
             // Toast.makeText(this, "I clicked ${it.name}", Toast.LENGTH_SHORT).show()
