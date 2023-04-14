@@ -1,5 +1,6 @@
 package me.duncte123.aitumcontrol
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -8,13 +9,17 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import me.duncte123.aitumcontrol.models.Rule
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
-    private val buttonToRuleId = mutableMapOf<Int, String>() // button_id TO aitum_rule_id
+    private val allRules = mutableListOf<Rule>()
     private var workerIP = ""
     private val aitumBase: String
         get() = "http://$workerIP:7777"
@@ -38,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("NSD", "Service discovery success $service")
 
             if (service.serviceType == PEBBLE) {
-                setStatusText("$RED Waiting for Aitum....")
+                setStatusText("$RED Connecting....")
                 aitumName = service.serviceName
                 nsdManager.resolveService(service, resolveListener)
             }
@@ -93,6 +98,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var recyclerView: RecyclerView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -102,9 +109,29 @@ class MainActivity : AppCompatActivity() {
 
         nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
 
-        nsdManager.discoverServices(PEBBLE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        recyclerView = findViewById(R.id.rule_list)
 
-        // connectToAitum()
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
+
+        recyclerView.adapter = RuleButtonAdapter(allRules) {
+            // Toast.makeText(this, "I clicked ${it.name}", Toast.LENGTH_SHORT).show()
+            executeRule(it.id)
+        }
+    }
+
+    override fun onPause() {
+        nsdManager.stopServiceDiscovery(discoveryListener)
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        nsdManager.discoverServices(PEBBLE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+    }
+
+    override fun onDestroy() {
+        nsdManager.stopServiceDiscovery(discoveryListener)
+        super.onDestroy()
     }
 
     private fun setStatusText(newText: String) {
@@ -112,17 +139,6 @@ class MainActivity : AppCompatActivity() {
            Log.d("Status_Text", newText)
            findViewById<TextView>(R.id.status_text).text = newText
        }
-    }
-
-    fun onRuleButtonPressed(view: View) {
-        if (!aitumConnected) {
-            return
-        }
-
-        if (buttonToRuleId.containsKey(view.id)) {
-            val ruleId = buttonToRuleId[view.id]!!
-            executeRule(ruleId)
-        }
     }
 
     private fun stopDiscovery() {
@@ -155,15 +171,12 @@ class MainActivity : AppCompatActivity() {
         httpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 e.printStackTrace()
+                setStatusText("$RED Failed to connect: ${e.message}")
             }
 
+            @SuppressLint("NotifyDataSetChanged")
             override fun onResponse(call: Call, response: Response) {
-                val ruleMap = mapOf(
-                    // aitum_rule_name TO button_id
-                    "Main cam" to R.id.cam_main,
-                    "C920" to R.id.cam_c920,
-                    "Room Cam" to R.id.cam_room
-                )
+                allRules.clear()
 
                 response.use { resp ->
                     resp.body?.use {
@@ -178,14 +191,18 @@ class MainActivity : AppCompatActivity() {
                         val data = json.getJSONObject("data")
 
                         data.keys().forEach { key ->
-                            if (ruleMap.containsKey(key)) {
-                                buttonToRuleId[ruleMap[key]!!] = data.getString(key)
-                            }
+                            allRules.add(
+                                Rule(key, data.getString(key))
+                            )
                         }
 
                         aitumConnected = true
 
                         setStatusText("$GREEN Connected to Aitum")
+
+                        runOnUiThread {
+                            recyclerView.adapter?.notifyDataSetChanged()
+                        }
                     }
                 }
             }
