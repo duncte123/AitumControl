@@ -119,8 +119,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onPause() {
+    private fun stopDiscovery() {
         nsdManager.stopServiceDiscovery(discoveryListener)
+        httpClient.connectionPool.evictAll()
+    }
+
+    override fun onPause() {
+        stopDiscovery()
         super.onPause()
     }
 
@@ -130,7 +135,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        nsdManager.stopServiceDiscovery(discoveryListener)
+        stopDiscovery()
         super.onDestroy()
     }
 
@@ -139,10 +144,6 @@ class MainActivity : AppCompatActivity() {
            Log.d("Status_Text", newText)
            findViewById<TextView>(R.id.status_text).text = newText
        }
-    }
-
-    private fun stopDiscovery() {
-        nsdManager.stopServiceDiscovery(discoveryListener)
     }
 
     private fun executeRule(ruleId: String) {
