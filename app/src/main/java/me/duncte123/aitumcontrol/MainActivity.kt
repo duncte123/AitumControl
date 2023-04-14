@@ -1,39 +1,120 @@
 package me.duncte123.aitumcontrol
 
+import android.content.Context
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
+import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
     private val buttonToRuleId = mutableMapOf<Int, String>() // button_id TO aitum_rule_id
-    // TODO: yell at david until he exposes pebble outside of the local network
-    private val aitumIP = "http://192.168.1.182:7777"
+    private var workerIP = ""
+    private val aitumBase: String
+        get() = "http://$workerIP:7777"
+
     private val httpClient = OkHttpClient()
     private var aitumConnected = false
 
+    var aitumName = ""
+
+    private lateinit var nsdManager: NsdManager
+
+    private val discoveryListener = object : NsdManager.DiscoveryListener {
+
+        // Called as soon as service discovery begins.
+        override fun onDiscoveryStarted(regType: String) {
+            Log.d("NSD", "Service discovery started")
+        }
+
+        override fun onServiceFound(service: NsdServiceInfo) {
+            // A service was found! Do something with it.
+            Log.d("NSD", "Service discovery success $service")
+
+            if (service.serviceType == PEBBLE) {
+                setStatusText("$RED Waiting for Aitum....")
+                aitumName = service.serviceName
+                nsdManager.resolveService(service, resolveListener)
+            }
+        }
+
+        override fun onServiceLost(service: NsdServiceInfo) {
+            // When the network service is no longer available.
+            // Internal bookkeeping code goes here.
+            Log.d("NSD", "service lost: $service")
+            setStatusText("$RED Disconnected.")
+            aitumConnected = false
+        }
+
+        override fun onDiscoveryStopped(serviceType: String) {
+//            setStatusText("$RED Disconnected.")
+            Log.d("NSD", "Discovery stopped: $serviceType")
+        }
+
+        override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+            Log.e("NSD", "Discovery failed: Error code:$errorCode")
+            setStatusText("$RED Failed to connect")
+            stopDiscovery()
+        }
+
+        override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
+            Log.e("NSD", "Discovery failed: Error code:$errorCode")
+            setStatusText("$RED Failed to connect")
+            stopDiscovery()
+        }
+    }
+
+    private val resolveListener = object : NsdManager.ResolveListener {
+
+        override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+            // Called when the resolve fails. Use the error code to debug.
+            Log.e("NSD", "Resolve failed: $errorCode")
+        }
+
+        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+            Log.d("NSD", "Resolve Succeeded. $serviceInfo")
+
+            if (serviceInfo.serviceName == aitumName) {
+                val port: Int = serviceInfo.port
+                val host: InetAddress = serviceInfo.host
+
+                workerIP = host.hostAddress!!
+
+                connectToAitum()
+                Log.d("NSD", "AITUM: $host:$port")
+                // stopDiscovery()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         aitumConnected = false
-        setStatusText("$RED Waiting for connection....")
+        setStatusText("$RED Waiting for Aitum....")
 
-        connectToAitum()
+        nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
+
+        nsdManager.discoverServices(PEBBLE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+
+        // connectToAitum()
     }
 
     private fun setStatusText(newText: String) {
-        findViewById<TextView>(R.id.status_text).text = newText
+       runOnUiThread {
+           Log.d("Status_Text", newText)
+           findViewById<TextView>(R.id.status_text).text = newText
+       }
     }
 
     fun onRuleButtonPressed(view: View) {
-        println(view.id)
-        println("Rule ID to trigger: ${buttonToRuleId[view.id]}")
-
         if (!aitumConnected) {
             return
         }
@@ -44,9 +125,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun stopDiscovery() {
+        nsdManager.stopServiceDiscovery(discoveryListener)
+    }
+
     private fun executeRule(ruleId: String) {
         val request = Request.Builder()
-            .url("$aitumIP/aitum/rules/$ruleId")
+            .url("$aitumBase/aitum/rules/$ruleId")
             .get()
             .build()
 
@@ -63,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun connectToAitum() {
         val request = Request.Builder()
-            .url("$aitumIP/aitum/rules")
+            .url("$aitumBase/aitum/rules")
             .get()
             .build()
 
@@ -100,9 +185,7 @@ class MainActivity : AppCompatActivity() {
 
                         aitumConnected = true
 
-                        runOnUiThread {
-                            setStatusText("$GREEN Connected to Aitum")
-                        }
+                        setStatusText("$GREEN Connected to Aitum")
                     }
                 }
             }
@@ -112,5 +195,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val GREEN = "\uD83D\uDFE2"
         const val RED = "\uD83D\uDD34"
+        const val PEBBLE = "_pebble._tcp."
     }
 }
