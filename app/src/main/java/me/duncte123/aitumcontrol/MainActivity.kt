@@ -1,6 +1,5 @@
 package me.duncte123.aitumcontrol
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -11,7 +10,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,11 +19,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
-
-// TODO: Implement settings to hide hide rules
-// How would the filtering work
-// json object with rule ids that should be hidden { "rule_id": true/false }
-// build the new array from the switches to not keep deleted rules in the system
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
     private val hiddenRuleIds = mutableListOf<String>()
     private val allRules = mutableListOf<Rule>()
@@ -175,6 +168,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
        }
     }
 
+    // View parameter is required for button
     fun onSettingsButtonClicked(view: View) {
         val intent = Intent(this, SettingsActivity::class.java)
 
@@ -213,7 +207,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                 setStatusText("$RED Failed to connect: ${e.message}")
             }
 
-            @SuppressLint("NotifyDataSetChanged")
             override fun onResponse(call: Call, response: Response) {
                 allRules.clear()
 
@@ -249,19 +242,19 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
-        println("DATASET IS CHANGED")
+        Log.d("Preferences", "DATASET IS CHANGED")
 
         val hiddenRulesPref = prefs.getStringSet("hidden_rules", setOf()) ?: return
         val hiddenRulesPrefList = hiddenRulesPref.toList()
 
         if (hiddenRulesPrefList == hiddenRuleIds) {
-            println("IS SAME")
+            Log.d("Preferences", "IS SAME")
             return
         }
 
-        println("====================================================")
-        println(hiddenRulesPrefList)
-        println("====================================================")
+        Log.d("Preferences", "====================================================")
+        Log.d("Preferences", hiddenRulesPrefList.toString())
+        Log.d("Preferences", "====================================================")
 
         hiddenRuleIds.clear()
         hiddenRuleIds.addAll(hiddenRulesPrefList)

@@ -10,8 +10,6 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        // TODO get extra named "rules"
-
         val strArray = intent.getStringExtra(INTENT_RULES_KEY)
 
         supportFragmentManager

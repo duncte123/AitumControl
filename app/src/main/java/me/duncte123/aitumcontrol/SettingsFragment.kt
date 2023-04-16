@@ -30,10 +30,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 )
             }
         }
-
-        println("========================================")
-        println("All rules added")
-        println("========================================")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -47,6 +43,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         hiddenRules?.apply {
             entries = ruleNames
             entryValues = ruleIds
+            values = hiddenRules.values.filter { ruleIds.contains(it) }.toSet() // It does not crash, is this really worth it?
         }
     }
 
