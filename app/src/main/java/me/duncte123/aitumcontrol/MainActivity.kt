@@ -19,6 +19,9 @@ import java.io.IOException
 import java.net.InetAddress
 
 // TODO: Implement settings to hide hide rules
+// How would the filtering work
+// json object with rule ids that should be hidden { "rule_id": true/false }
+// build the new array from the switches to not keep deleted rules in the system
 class MainActivity : AppCompatActivity() {
     private val allRules = mutableListOf<Rule>()
     private var workerIP = ""
