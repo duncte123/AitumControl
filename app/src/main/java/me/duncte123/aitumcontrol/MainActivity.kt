@@ -3,6 +3,7 @@ package me.duncte123.aitumcontrol
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import androidx.appcompat.app.AppCompatActivity
@@ -25,8 +26,10 @@ import java.net.InetAddress
 // How would the filtering work
 // json object with rule ids that should be hidden { "rule_id": true/false }
 // build the new array from the switches to not keep deleted rules in the system
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
+    private val hiddenRuleIds = mutableListOf<String>()
     private val allRules = mutableListOf<Rule>()
+
     private var workerIP = ""
     private val aitumBase: String
         get() = "http://$workerIP:7777"
@@ -111,10 +114,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        onSharedPreferenceChanged(preferences, null)
+
         // TODO: remove this, clears all preferences
-        PreferenceManager.getDefaultSharedPreferences(this).edit {
+        /*preferences.edit {
             clear().commit()
-        }
+        }*/
 
         aitumConnected = false
         setStatusText("$RED Waiting for Aitum....")
@@ -125,7 +132,12 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView.layoutManager = GridLayoutManager(this, 2) // TODO: based on screen width
 
-        recyclerView.adapter = RuleButtonAdapter(allRules) {
+        resetRuleAdapter()
+    }
+    private fun resetRuleAdapter() {
+        val filteredRules = allRules.filter { !hiddenRuleIds.contains(it.id) }
+
+        recyclerView.adapter = RuleButtonAdapter(filteredRules) {
             // Toast.makeText(this, "I clicked ${it.name}", Toast.LENGTH_SHORT).show()
             executeRule(it.id)
         }
@@ -136,6 +148,7 @@ class MainActivity : AppCompatActivity() {
         httpClient.connectionPool.evictAll()
     }
 
+    // Don't register the settings listener here, as we pause during settings screen
     override fun onPause() {
         stopDiscovery()
         super.onPause()
@@ -144,11 +157,15 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         nsdManager.discoverServices(PEBBLE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onDestroy() {
         stopDiscovery()
         super.onDestroy()
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(this)
     }
 
     private fun setStatusText(newText: String) {
@@ -223,12 +240,35 @@ class MainActivity : AppCompatActivity() {
                         setStatusText("$GREEN Connected to Aitum")
 
                         runOnUiThread {
-                            recyclerView.adapter?.notifyDataSetChanged()
+                            resetRuleAdapter()
                         }
                     }
                 }
             }
         })
+    }
+
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
+        println("DATASET IS CHANGED")
+
+        val hiddenRulesPref = prefs.getStringSet("hidden_rules", setOf()) ?: return
+        val hiddenRulesPrefList = hiddenRulesPref.toList()
+
+        if (hiddenRulesPrefList == hiddenRuleIds) {
+            println("IS SAME")
+            return
+        }
+
+        println("====================================================")
+        println(hiddenRulesPrefList)
+        println("====================================================")
+
+        hiddenRuleIds.clear()
+        hiddenRuleIds.addAll(hiddenRulesPrefList)
+
+        if (this::recyclerView.isInitialized) {
+            resetRuleAdapter()
+        }
     }
 
     companion object {

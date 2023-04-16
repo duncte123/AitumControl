@@ -14,11 +14,9 @@ class SettingsActivity : AppCompatActivity() {
 
         val strArray = intent.getStringExtra(INTENT_RULES_KEY)
 
-        println(strArray)
-
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.settings_container, SettingsFragment())
+            .replace(R.id.settings_container, SettingsFragment.newInstance(strArray))
             .commit()
 
     }
