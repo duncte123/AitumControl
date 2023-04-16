@@ -2,6 +2,7 @@ package me.duncte123.aitumcontrol
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import androidx.appcompat.app.AppCompatActivity
@@ -9,11 +10,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import me.duncte123.aitumcontrol.models.Rule
 import okhttp3.*
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
@@ -108,6 +111,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // TODO: remove this, clears all preferences
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            clear().commit()
+        }
+
         aitumConnected = false
         setStatusText("$RED Waiting for Aitum....")
 
@@ -148,6 +156,15 @@ class MainActivity : AppCompatActivity() {
            Log.d("Status_Text", newText)
            findViewById<TextView>(R.id.status_text).text = newText
        }
+    }
+
+    fun onSettingsButtonClicked(view: View) {
+        val intent = Intent(this, SettingsActivity::class.java)
+
+        val rulesJSON = JSONArray(allRules.map(Rule::toJson))
+
+        intent.putExtra(INTENT_RULES_KEY, rulesJSON.toString())
+        startActivity(intent)
     }
 
     private fun executeRule(ruleId: String) {
@@ -218,5 +235,7 @@ class MainActivity : AppCompatActivity() {
         const val GREEN = "\uD83D\uDFE2"
         const val RED = "\uD83D\uDD34"
         const val PEBBLE = "_pebble._tcp."
+
+        const val INTENT_RULES_KEY = "rules_json"
     }
 }
