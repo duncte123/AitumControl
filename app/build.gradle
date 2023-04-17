@@ -7,14 +7,37 @@ android {
     namespace 'me.duncte123.aitumcontrol'
     compileSdk 33
 
-    defaultConfig {
-        applicationId "me.duncte123.aitumcontrol"
-        minSdk 28
-        targetSdk 33
-        versionCode 1
-        versionName "1.0"
+    def versionPropsFile = file('version.properties')
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    if (versionPropsFile.canRead()) {
+        Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionPropsFile))
+        int versionBuild = versionProps['VERSION_BUILD'].toInteger()
+
+        defaultConfig {
+            applicationId "me.duncte123.aitumcontrol"
+            minSdk 28
+            targetSdk 33
+            versionCode versionBuild
+            versionName "1.${versionCode}.0"
+
+            testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        }
+    } else {
+        throw new FileNotFoundException("Could not read version.properties!")
+    }
+
+    /*Wrapping inside a method avoids auto incrementing on every gradle task run. Now it runs only when we build apk*/
+    ext.autoIncrementBuildNumber = {
+        if (versionPropsFile.canRead()) {
+            Properties versionProps = new Properties()
+            versionProps.load(new FileInputStream(versionPropsFile))
+            int versionBuild = versionProps['VERSION_BUILD'].toInteger() + 1
+            versionProps['VERSION_BUILD'] = versionBuild.toString()
+            versionProps.store(versionPropsFile.newWriter(), null)
+        } else {
+            throw new FileNotFoundException("Could not read version.properties!")
+        }
     }
 
     buildTypes {
@@ -23,6 +46,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Hook to check if the release/debug task is among the tasks to be executed.
+    //Let's make use of it
+    gradle.taskGraph.whenReady { taskGraph ->
+        /*if (taskGraph.hasTask(assembleDebug)) {  // when running debug task
+            autoIncrementBuildNumber()
+        } else */ if (taskGraph.hasTask(assembleRelease) || taskGraph.hasTask(bundleRelease)) { /* when running release task */
+            autoIncrementBuildNumber()
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
