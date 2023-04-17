@@ -1,12 +1,6 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory app:title="@string/rules_header">
-
-        <EditTextPreference
-            app:key="signature"
-            app:title="@string/signature_title"
-            app:useSimpleSummaryProvider="true" />
-
         <MultiSelectListPreference
             app:defaultValue="@array/empty_array"
             app:entries="@array/empty_array"
@@ -19,6 +13,7 @@
     <PreferenceCategory app:title="@string/sync_header">
 
         <SwitchPreferenceCompat
+            app:enabled="false"
             app:key="sync"
             app:title="@string/sync_title" />
 

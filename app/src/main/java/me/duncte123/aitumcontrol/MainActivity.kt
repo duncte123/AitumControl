@@ -8,7 +8,8 @@ import android.net.nsd.NsdServiceInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.View
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.TextView
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
@@ -19,19 +20,16 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.net.InetAddress
+
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
     private val hiddenRuleIds = mutableListOf<String>()
     private val allRules = mutableListOf<Rule>()
-
     private var workerIP = ""
     private val aitumBase: String
         get() = "http://$workerIP:7777"
-
     private val httpClient = OkHttpClient()
     private var aitumConnected = false
-
-    var aitumName = ""
-
+    private var aitumName = ""
     private lateinit var nsdManager: NsdManager
 
     private val discoveryListener = object : NsdManager.DiscoveryListener {
@@ -127,6 +125,12 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         resetRuleAdapter()
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
     private fun resetRuleAdapter() {
         val filteredRules = allRules.filter { !hiddenRuleIds.contains(it.id) }
 
@@ -168,14 +172,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
        }
     }
 
-    // View parameter is required for button
-    fun onSettingsButtonClicked(view: View) {
-        val intent = Intent(this, SettingsActivity::class.java)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.toolbar_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
 
-        val rulesJSON = JSONArray(allRules.map(Rule::toJson))
+                val rulesJSON = JSONArray(allRules.map(Rule::toJson))
 
-        intent.putExtra(INTENT_RULES_KEY, rulesJSON.toString())
-        startActivity(intent)
+                intent.putExtra(INTENT_RULES_KEY, rulesJSON.toString())
+                startActivity(intent)
+
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun executeRule(ruleId: String) {
