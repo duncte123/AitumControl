@@ -19,6 +19,7 @@ import okhttp3.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
+import java.lang.Exception
 import java.net.InetAddress
 
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -141,11 +142,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     private fun stopDiscovery() {
-        nsdManager.stopServiceDiscovery(discoveryListener)
+        try {
+            // Will throw if the listener is nog registered
+            nsdManager.stopServiceDiscovery(discoveryListener)
+        } catch (ignored: Exception) {}
         httpClient.connectionPool.evictAll()
     }
 
-    // Don't register the settings listener here, as we pause during settings screen
+    // Don't unregister the settings listener here, as we pause during settings screen
     override fun onPause() {
         stopDiscovery()
         super.onPause()
