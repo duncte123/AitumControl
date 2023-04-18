@@ -7,7 +7,7 @@
 
     <Button
         android:id="@+id/rule_button"
+        android:backgroundTint="@color/purple_500"
         android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:text="Button" />
+        android:layout_height="150dp"/>
 </FrameLayout>
