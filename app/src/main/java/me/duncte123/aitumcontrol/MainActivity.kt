@@ -12,8 +12,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 import me.duncte123.aitumcontrol.models.Rule
 import okhttp3.*
 import org.json.JSONArray
@@ -122,7 +124,11 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         recyclerView = findViewById(R.id.rule_list)
 
-        recyclerView.layoutManager = GridLayoutManager(this, 2) // TODO: based on screen width
+        val layoutManager = FlexboxLayoutManager(this)
+        layoutManager.flexDirection = FlexDirection.ROW
+        layoutManager.justifyContent = JustifyContent.SPACE_AROUND
+
+        recyclerView.layoutManager = layoutManager
 
         resetRuleAdapter()
     }
