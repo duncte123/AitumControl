@@ -74,7 +74,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         val filteredRules = aitumNSD.allRules.filter { !hiddenRuleIds.contains(it.id) }
 
         recyclerView.adapter = RuleButtonAdapter(filteredRules) {
-            // Toast.makeText(this, "I clicked ${it.name}", Toast.LENGTH_SHORT).show()
             aitumNSD.executeRule(it.id)
         }
     }
@@ -121,8 +120,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
         Log.d("Preferences", "DATASET IS CHANGED")
