@@ -16,7 +16,7 @@ android {
 
         defaultConfig {
             applicationId "me.duncte123.aitumcontrol"
-            minSdk 28
+            minSdk 24
             targetSdk 33
             versionCode versionBuild
             versionName "1.${versionCode}.0"

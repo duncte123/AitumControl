@@ -18,51 +18,67 @@ import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
 import me.duncte123.aitumcontrol.models.Rule
 import org.json.JSONArray
+import java.util.concurrent.Executors
+import kotlin.Exception
 
 // https://developer.android.com/guide/components/activities/activity-lifecycle
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
     private val hiddenRuleIds = mutableListOf<String>()
+    private val backgroundThread = Executors.newSingleThreadExecutor()
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var statusText: TextView
     private lateinit var aitumNSD: AitumNSD
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setStatusText("$RED Waiting for Aitum....")
-
         recyclerView = findViewById(R.id.rule_list)
+        statusText = findViewById(R.id.status_text)
     }
 
     override fun onStart() {
         super.onStart()
 
-        val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-
-        onSharedPreferenceChanged(preferences, null)
-
-        // TODO: remove this, clears all preferences
-        /*preferences.edit {
-            clear().commit()
-        }*/
+        setStatusText("$RED Waiting for Aitum....")
 
         val nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
+
         aitumNSD = AitumNSD(nsdManager, this) {
             // When the rules are updated
-            runOnUiThread {
-                resetRuleAdapter()
-            }
+            resetRuleAdapter()
         }
 
-        val layoutManager = FlexboxLayoutManager(this)
-        layoutManager.flexDirection = FlexDirection.ROW
-        layoutManager.justifyContent = JustifyContent.SPACE_AROUND
-        layoutManager.alignItems = AlignItems.CENTER
+        // Anything to make the app start faster :)
+        backgroundThread.submit {
+            try {
+                val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        recyclerView.layoutManager = layoutManager
+                // TODO: remove this, clears all preferences
+                /*preferences.edit {
+                    clear().commit()
+                }*/
 
-        resetRuleAdapter()
+                // calls resetRuleAdapter, needed before layout init
+                onSharedPreferenceChanged(preferences, null)
+
+                val layoutManager = FlexboxLayoutManager(this)
+                layoutManager.flexDirection = FlexDirection.ROW
+                layoutManager.justifyContent = JustifyContent.SPACE_AROUND
+                layoutManager.alignItems = AlignItems.CENTER
+
+                recyclerView.layoutManager = layoutManager
+
+                // Force own rules to be displayed
+                if (BuildConfig.DEBUG) {
+                    aitumNSD.loadFakeRules()
+                    resetRuleAdapter()
+                }
+            } catch (e: Exception) {
+                Log.e("AitumControl", "Error setting up", e)
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -99,10 +115,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     fun setStatusText(newText: String) {
-       runOnUiThread {
-           Log.d("Status_Text", newText)
-           findViewById<TextView>(R.id.status_text).text = newText
-       }
+        Log.d("Status_Text", newText)
+        runOnUiThread {
+            statusText.text = newText
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -117,6 +133,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -139,9 +156,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         hiddenRuleIds.clear()
         hiddenRuleIds.addAll(hiddenRulesPrefList)
 
-        if (this::recyclerView.isInitialized) {
-            resetRuleAdapter()
-        }
+        resetRuleAdapter()
     }
 
     companion object {

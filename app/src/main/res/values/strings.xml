@@ -17,4 +17,6 @@
     <string name="title_activity_settings">Settings</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="content_desc_rule_list">List populated with aitum rules</string>
 </resources>

@@ -34,6 +34,7 @@
         android:layout_marginTop="8dp"
         android:paddingStart="0dp"
         android:paddingEnd="0dp"
+        android:contentDescription="@string/content_desc_rule_list"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

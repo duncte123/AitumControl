@@ -91,6 +91,19 @@ class AitumNSD(
         }
     }
 
+    fun loadFakeRules() {
+        this.allRules.addAll(listOf(
+            Rule("SFX: Honk", "1"),
+            Rule("SFX: Discord Ping", "2"),
+            Rule("Scene: starting soon", "3"),
+            Rule("Scene: gaming", "4"),
+            Rule("Scene: just chatting", "5"),
+            Rule("Scene: brb", "6"),
+            Rule("Scene: ending stream", "7"),
+            Rule("I needed one more", "8"),
+        ))
+    }
+
     fun startDiscovery() {
         nsdManager.discoverServices(MainActivity.PEBBLE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
     }
