@@ -41,18 +41,18 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onStart() {
         super.onStart()
 
-        setStatusText("$RED Waiting for Aitum....")
-
-        val nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
-
-        aitumNSD = AitumNSD(nsdManager, this) {
-            // When the rules are updated
-            resetRuleAdapter()
-        }
-
         // Anything to make the app start faster :)
         backgroundThread.submit {
             try {
+                setStatusText("$RED Waiting for Aitum....")
+
+                val nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
+
+                aitumNSD = AitumNSD(nsdManager, this) {
+                    // When the rules are updated
+                    resetRuleAdapter()
+                }
+
                 val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
                 // TODO: remove this, clears all preferences
@@ -68,7 +68,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                 layoutManager.justifyContent = JustifyContent.SPACE_AROUND
                 layoutManager.alignItems = AlignItems.CENTER
 
-                recyclerView.layoutManager = layoutManager
+                runOnUiThread {
+                    recyclerView.layoutManager = layoutManager
+                }
 
                 // Force own rules to be displayed
                 if (BuildConfig.DEBUG) {
@@ -101,8 +103,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onResume() {
+        backgroundThread.submit {
+            aitumNSD.startDiscovery()
+        }
         super.onResume()
-        aitumNSD.startDiscovery()
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
     }
