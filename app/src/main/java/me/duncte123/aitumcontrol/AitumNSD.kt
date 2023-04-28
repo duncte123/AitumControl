@@ -117,6 +117,10 @@ class AitumNSD(
     }
 
     fun executeRule(ruleId: String) {
+        if (BuildConfig.USE_FAKE_RULES) {
+            return
+        }
+
         val request = Request.Builder()
             .url("$aitumBase/aitum/rules/$ruleId")
             .get()

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.WindowManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
@@ -53,15 +54,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     resetRuleAdapter()
                 }
 
-                val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-
-                // TODO: remove this, clears all preferences
-                /*preferences.edit {
-                    clear().commit()
-                }*/
-
-                // calls resetRuleAdapter, needed before layout init
-                onSharedPreferenceChanged(preferences, null)
+                // Force own rules to be displayed
+                if (BuildConfig.USE_FAKE_RULES) {
+                    aitumNSD.loadFakeRules()
+                }
 
                 val layoutManager = FlexboxLayoutManager(this)
                 layoutManager.flexDirection = FlexDirection.ROW
@@ -72,11 +68,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     recyclerView.layoutManager = layoutManager
                 }
 
-                // Force own rules to be displayed
-                if (BuildConfig.DEBUG) {
-                    aitumNSD.loadFakeRules()
-                    resetRuleAdapter()
-                }
+                val preferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+                // calls resetRuleAdapter, needed before layout init
+                onSharedPreferenceChanged(preferences, null)
             } catch (e: Exception) {
                 Log.e("AitumControl", "Error setting up", e)
             }
@@ -91,14 +86,18 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private fun resetRuleAdapter() {
         val filteredRules = aitumNSD.allRules.filter { !hiddenRuleIds.contains(it.id) }
 
-        recyclerView.adapter = RuleButtonAdapter(filteredRules) {
-            aitumNSD.executeRule(it.id)
+        runOnUiThread {
+            recyclerView.adapter = RuleButtonAdapter(filteredRules) {
+                aitumNSD.executeRule(it.id)
+            }
         }
     }
 
     // Don't unregister the settings listener here, as we pause during settings screen
     override fun onPause() {
-        aitumNSD.stopDiscovery()
+        backgroundThread.submit {
+            aitumNSD.stopDiscovery()
+        }
         super.onPause()
     }
 
@@ -112,7 +111,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onDestroy() {
-        aitumNSD.stopDiscovery()
+        backgroundThread.submit {
+            aitumNSD.stopDiscovery()
+        }
         super.onDestroy()
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
@@ -145,11 +146,22 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
         Log.d("Preferences", "DATASET IS CHANGED")
 
+        val shouldKeepScreenOn = prefs.getBoolean("keep_device_on", false)
+
+        runOnUiThread {
+            if (shouldKeepScreenOn) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+
         val hiddenRulesPref = prefs.getStringSet("hidden_rules", setOf()) ?: return
         val hiddenRulesPrefList = hiddenRulesPref.toList()
 
         if (hiddenRulesPrefList == hiddenRuleIds) {
             Log.d("Preferences", "IS SAME")
+            resetRuleAdapter()
             return
         }
 

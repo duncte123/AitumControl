@@ -2,12 +2,16 @@
     <string name="app_name">Aitum Control</string>
 
     <!-- Preference Titles -->
-    <string name="rules_header">Rules</string>
+    <string name="rules_header">Application</string>
     <string name="sync_header">Sync</string>
 
     <!-- Rule Preferences -->
-    <string name="signature_title">Your signature</string>
+    <string name="keep_device_awake_title">Keep phone awake</string>
     <string name="disable_rules_title">Select rules to hide</string>
+
+    <!-- application preferences -->
+    <string name="keep_device_awake_on">Your phone will be kept awake whilst using the app</string>
+    <string name="keep_device_awake_off" />
 
     <!-- Sync Preferences -->
     <string name="sync_title">Sync rules periodically</string>
@@ -15,8 +19,8 @@
     <string name="attachment_summary_on">Switch is enabled</string>
     <string name="attachment_summary_off">Switch is disabled</string>
     <string name="title_activity_settings">Settings</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="settings_version">App version: %s</string>
 
     <string name="content_desc_rule_list">List populated with aitum rules</string>
 </resources>

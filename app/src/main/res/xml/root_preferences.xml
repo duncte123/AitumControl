@@ -8,9 +8,14 @@
             app:key="hidden_rules"
             app:title="@string/disable_rules_title" />
 
+        <SwitchPreferenceCompat
+            app:key="keep_device_on"
+            app:summaryOn="@string/keep_device_awake_on"
+            app:title="@string/keep_device_awake_title" />
+
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/sync_header">
+    <!--<PreferenceCategory app:title="@string/sync_header">
 
         <SwitchPreferenceCompat
             app:enabled="false"
@@ -24,6 +29,6 @@
             app:summaryOn="@string/attachment_summary_on"
             app:title="@string/attachment_title" />
 
-    </PreferenceCategory>
+    </PreferenceCategory>-->
 
 </PreferenceScreen>
