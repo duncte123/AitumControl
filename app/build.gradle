@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'me.duncte123.aitumcontrol'
-    compileSdk 33
+    compileSdk 34
 
     def versionPropsFile = file('version.properties')
 
@@ -17,9 +17,9 @@ android {
         defaultConfig {
             applicationId "me.duncte123.aitumcontrol"
             minSdk 24
-            targetSdk 33
+            targetSdk 34
             versionCode versionBuild
-            versionName "1.${versionCode}.0"
+            versionName "1.7.${versionCode}"
 
             testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         }
@@ -64,9 +64,9 @@ android {
     // Hook to check if the release/debug task is among the tasks to be executed.
     //Let's make use of it
     gradle.taskGraph.whenReady { taskGraph ->
-        /*if (taskGraph.hasTask(assembleDebug)) {  // when running debug task
+        if (taskGraph.hasTask(assembleDebug)) {  // when running debug task
             autoIncrementBuildNumber()
-        } else */ if (taskGraph.hasTask(assembleRelease) || taskGraph.hasTask(bundleRelease)) { /* when running release task */
+        } else if (taskGraph.hasTask(assembleRelease) || taskGraph.hasTask(bundleRelease)) { /* when running release task */
             autoIncrementBuildNumber()
         }
     }

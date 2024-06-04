@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
                 // Force own rules to be displayed
                 if (BuildConfig.USE_FAKE_RULES) {
+                    Log.d("Main", "Loading fake rules!!!")
                     aitumNSD.loadFakeRules()
                 }
 
