@@ -11,7 +11,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-import java.lang.Exception
 import java.net.InetAddress
 
 class AitumNSD(
@@ -25,6 +24,7 @@ class AitumNSD(
     private val httpClient = OkHttpClient()
     private var aitumConnected = false
     private var aitumName = ""
+//    private var nsdExecutor = Executors.newSingleThreadExecutor()
 
     private val discoveryListener = object : NsdManager.DiscoveryListener {
 
@@ -40,6 +40,8 @@ class AitumNSD(
             if (service.serviceType == MainActivity.PEBBLE) {
                 main.setStatusText("${MainActivity.RED} Connecting....")
                 aitumName = service.serviceName
+                // Requires API 34, idk if 24 is a good min to stay on for now
+//                nsdManager.registerServiceInfoCallback(service, nsdExecutor, resolveListener)
                 nsdManager.resolveService(service, resolveListener)
             }
         }
