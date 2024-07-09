@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'me.duncte123.aitumcontrol'
-    compileSdk 34
+    compileSdk 35
 
     def versionPropsFile = file('version.properties')
 
@@ -17,7 +17,7 @@ android {
         defaultConfig {
             applicationId "me.duncte123.aitumcontrol"
             minSdk 24
-            targetSdk 34
+            targetSdk 35
             versionCode versionBuild
             versionName "1.7.${versionCode}"
 
