@@ -15,14 +15,17 @@
 
         <item name="colorBackgroundFloating">?attr/colorPrimaryVariant</item>
         <item name="android:colorBackgroundFloating">@color/white</item>
+
+        <item name="alertDialogTheme">@style/AlertDialogTheme</item>
     </style>
 
-    <style name="AlertDialogTheme" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+    <style name="AlertDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+<!--        <item name="colorPrimary">@color/purple_50</item>-->
         <item name="buttonBarNegativeButtonStyle">@style/AlertButtonStyle</item>
         <item name="buttonBarPositiveButtonStyle">@style/AlertButtonStyle</item>
     </style>
 
     <style name="AlertButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">@color/purple_50</item>
+        <item name="android:textColor">@color/purple_200</item>
     </style>
 </resources>
